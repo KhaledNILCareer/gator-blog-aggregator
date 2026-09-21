@@ -7,6 +7,8 @@ import {
 import { setUser } from "./config.js";
 import { readConfig } from "./config.js";
 import { fetchFeed } from "./lib/rss.js";
+import { createFeed } from "./lib/db/queries/feeds.js";
+import { Feed, User } from "./lib/db/schema.js";
 
 export type CommandHandler = (
   cmdName: string,
@@ -108,3 +110,37 @@ export async function handlerAgg(
   console.dir(feed, { depth: null });
   
 }
+
+export function printFeed(feed: Feed, user: User): void {
+  console.log(`ID: ${feed.id}`);
+  console.log(`Created At: ${feed.createdAt}`);
+  console.log(`Updated At: ${feed.updatedAt}`);
+  console.log(`Name: ${feed.name}`);
+  console.log(`URL: ${feed.url}`);
+  console.log(`User: ${user.name}`);
+}
+
+export async function handlerAddFeed(
+  cmdName: string,
+  ...args: string[]
+): Promise<void> {
+
+  if (args.length < 2) {
+    throw new Error("Feed name and URL are required");
+  }
+  const name = args[0];
+  const url = args[1];
+
+  const user = readConfig().currentUserName
+  if(!user){
+    throw new Error("login first")
+  }
+  const dbUser = await getUserByName(user);
+  if (!dbUser) {
+    throw new Error("User not found");
+  }
+
+  const feed = await createFeed(name, url, dbUser.id);
+  printFeed(feed, dbUser);
+}
+
