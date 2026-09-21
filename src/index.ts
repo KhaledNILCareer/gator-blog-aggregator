@@ -1,6 +1,6 @@
-import { CommandsRegistry, handlerLogin, registerCommand, runCommand } from "./commands.js";
+import { CommandsRegistry, handlerLogin, registerCommand, runCommand, handlerRegister } from "./commands.js";
 
-function main() {
+async function  main() {
   const processArgs = process.argv.slice(2);
   if (processArgs.length === 0) {
     console.error("Not enough arguments");
@@ -10,9 +10,10 @@ function main() {
   const args = processArgs.slice(1);
   const registry :CommandsRegistry = {};
   registerCommand(registry, "login", handlerLogin)
+  registerCommand(registry, "register", handlerRegister)
 
   try {
-    runCommand(registry, cmdName, ...args)
+    await runCommand(registry, cmdName, ...args)
   } catch (error) {
     if (error instanceof Error) {
       console.error(error.message);
@@ -23,7 +24,7 @@ function main() {
     process.exit(1);
   }
 
-  
+  process.exit(0);
 }
 
 main();
