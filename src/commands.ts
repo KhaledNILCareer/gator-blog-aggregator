@@ -6,6 +6,7 @@ import {
 } from "./lib/db/queries/users.js";
 import { setUser } from "./config.js";
 import { readConfig } from "./config.js";
+import { fetchFeed } from "./lib/rss.js";
 
 export type CommandHandler = (
   cmdName: string,
@@ -97,4 +98,13 @@ export async function handlerUsers(
     }
     
   })
+}
+export async function handlerAgg(
+  cmdName: string,
+  ...args: string[]
+): Promise<void> {
+
+  const feed = await fetchFeed("https://www.wagslane.dev/index.xml");
+  console.dir(feed, { depth: null });
+  
 }
