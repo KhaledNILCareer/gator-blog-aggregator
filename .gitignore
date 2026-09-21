@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# TypeScript build output
+dist/
+
+# Environment variables
+.env
+.env.*
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / Editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Local configuration (if ever stored inside the repo)
+.gatorconfig.json
