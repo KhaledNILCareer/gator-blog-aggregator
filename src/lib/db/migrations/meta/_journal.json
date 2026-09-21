@@ -15,6 +15,13 @@
       "when": 1789996665884,
       "tag": "0001_absurd_blue_shield",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789999504030,
+      "tag": "0002_boring_celestials",
+      "breakpoints": true
     }
   ]
 }

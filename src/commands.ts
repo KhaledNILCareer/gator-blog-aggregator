@@ -7,9 +7,9 @@ import {
 import { setUser } from "./config.js";
 import { readConfig } from "./config.js";
 import { fetchFeed } from "./lib/rss.js";
-import { createFeed, getFeeds } from "./lib/db/queries/feeds.js";
+import { createFeed, getFeeds, getFeedByURL } from "./lib/db/queries/feeds.js";
 import { Feed, User } from "./lib/db/schema.js";
-
+import { createFeedFollow, getFeedFollowsForUser } from "./lib/db/queries/feedFollows.js";
 export type CommandHandler = (
   cmdName: string,
   ...args: string[]
@@ -141,6 +141,9 @@ export async function handlerAddFeed(
   }
 
   const feed = await createFeed(name, url, dbUser.id);
+  const feedFollow = await createFeedFollow(dbUser.id, feed.id);
+  console.log(`User: ${feedFollow.userName}`);
+  console.log(`Feed: ${feedFollow.feedName}`);
   printFeed(feed, dbUser);
 }
 export async function handlerFeeds(
@@ -157,3 +160,54 @@ export async function handlerFeeds(
   })
 }
 
+export async function handlerFollow(
+  cmdName: string,
+  ...args: string[]
+): Promise<void> {
+  if (args.length < 1) {
+    throw new Error("Feed URL is required");
+  }
+
+  const url = args[0];
+
+  const config = readConfig();
+  if (!config.currentUserName) {
+    throw new Error("No current user selected");
+  }
+  const user = await getUserByName(config.currentUserName);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const feed = await getFeedByURL(url);
+  if (!feed) {
+    throw new Error("Feed not found");
+  }
+
+  const feedFollow = await createFeedFollow(user.id, feed.id);
+
+  console.log(`User: ${feedFollow.userName}`);
+  console.log(`Feed: ${feedFollow.feedName}`);
+}
+export async function handlerFollowing(
+  cmdName: string,
+  ...args: string[]
+): Promise<void> {
+  const config = readConfig();
+
+  if (!config.currentUserName) {
+    throw new Error("No current user selected");
+  }
+
+  const user = await getUserByName(config.currentUserName);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const follows = await getFeedFollowsForUser(user.id);
+
+  follows.forEach((follow) => {
+    console.log(follow.feedName);
+  });
+}

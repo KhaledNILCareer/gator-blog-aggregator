@@ -23,17 +23,11 @@ export async function getFeeds() {
 
   return result;
 }
-/* export async function getUserByName(name: string) {
-  const [result] = await db
+export async function getFeedByURL(url: string) {
+  const [feed] = await db
     .select()
     .from(feeds)
-    .where(eq(users.name, name));
+    .where(eq(feeds.url, url));
 
-  return result;
+  return feed;
 }
-
-
-
-export async function deleteUsers() {
-  await db.delete(feeds);
-} */
