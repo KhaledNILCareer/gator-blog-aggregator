@@ -2,8 +2,10 @@ import {
   createUser,
   getUserByName,
   deleteUsers,
+  getUsers
 } from "./lib/db/queries/users.js";
 import { setUser } from "./config.js";
+import { readConfig } from "./config.js";
 
 export type CommandHandler = (
   cmdName: string,
@@ -77,4 +79,22 @@ export async function handlerReset(
 ): Promise<void> {
   await deleteUsers();
   console.log("Users deleted successfully");
+}
+
+export async function handlerUsers(
+  cmdName: string,
+  ...args: string[]
+): Promise<void> {
+
+  const users = await getUsers();
+  const config = readConfig();
+
+  users.forEach((user)=>{
+    if (user.name === config.currentUserName){
+      console.log(`* ${user.name} (current)`)
+    } else {
+      console.log(`* ${user.name}`)
+    }
+    
+  })
 }
