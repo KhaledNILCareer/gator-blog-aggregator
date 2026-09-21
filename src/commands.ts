@@ -7,7 +7,7 @@ import {
 import { setUser } from "./config.js";
 import { readConfig } from "./config.js";
 import { fetchFeed } from "./lib/rss.js";
-import { createFeed } from "./lib/db/queries/feeds.js";
+import { createFeed, getFeeds } from "./lib/db/queries/feeds.js";
 import { Feed, User } from "./lib/db/schema.js";
 
 export type CommandHandler = (
@@ -142,5 +142,18 @@ export async function handlerAddFeed(
 
   const feed = await createFeed(name, url, dbUser.id);
   printFeed(feed, dbUser);
+}
+export async function handlerFeeds(
+  cmdName: string,
+  ...args: string[]
+): Promise<void> {
+
+  const feeds = await getFeeds();
+  feeds.forEach((feed) => {
+    console.log(`Name: ${feed.feedName}`);
+    console.log(`URL: ${feed.feedUrl}`);
+    console.log(`User: ${feed.userName}`);
+    console.log();
+  })
 }
 
