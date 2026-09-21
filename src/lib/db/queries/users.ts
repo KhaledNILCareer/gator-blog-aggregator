@@ -19,3 +19,7 @@ export async function getUserByName(name: string) {
 
   return result;
 }
+
+export async function deleteUsers() {
+  await db.delete(users);
+}

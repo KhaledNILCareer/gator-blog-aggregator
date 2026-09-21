@@ -1,6 +1,7 @@
 import {
   createUser,
   getUserByName,
+  deleteUsers,
 } from "./lib/db/queries/users.js";
 import { setUser } from "./config.js";
 
@@ -69,4 +70,11 @@ export async function handlerRegister(
 
   console.log(`User ${user.name} was created`);
   console.log(user);
+}
+
+export async function handlerReset(
+  cmdName: string
+): Promise<void> {
+  await deleteUsers();
+  console.log("Users deleted successfully");
 }
