@@ -10,7 +10,7 @@ import { fetchFeed } from "./lib/rss.js";
 import { createFeed, getFeeds, getFeedByURL } from "./lib/db/queries/feeds.js";
 import { Feed, User } from "./lib/db/schema.js";
 import { createFeedFollow, getFeedFollowsForUser, deleteFeedFollow } from "./lib/db/queries/feedFollows.js";
-
+import { scrapeFeeds } from "./lib/db/queries/feeds.js";
 export type CommandHandler = (
   cmdName: string,
   ...args: string[]
@@ -130,14 +130,41 @@ export async function handlerUsers(
     
   })
 }
+
+function handleError(error: unknown): void {
+  if (error instanceof Error) {
+    console.error(error.message);
+  } else {
+    console.error("An unknown error occurred:", error);
+  }
+}
+
 export async function handlerAgg(
   cmdName: string,
   ...args: string[]
 ): Promise<void> {
+  if (args.length < 1) {
+    throw new Error("Time between requests is required");
+  }
 
-  const feed = await fetchFeed("https://www.wagslane.dev/index.xml");
-  console.dir(feed, { depth: null });
-  
+  const durationStr = args[0];
+  const timeBetweenRequests = parseDuration(durationStr);
+
+  console.log(`Collecting feeds every ${durationStr}`);
+
+  scrapeFeeds().catch(handleError);
+
+  const interval = setInterval(() => {
+    scrapeFeeds().catch(handleError);
+  }, timeBetweenRequests);
+
+  await new Promise<void>((resolve) => {
+    process.on("SIGINT", () => {
+      console.log("Shutting down feed aggregator...");
+      clearInterval(interval);
+      resolve();
+    });
+  });
 }
 
 export function printFeed(feed: Feed, user: User): void {
@@ -228,3 +255,30 @@ export async function handlerUnfollow(
 
   await deleteFeedFollow(user.id ,url)
 }
+
+export function parseDuration(durationStr: string): number {
+  const regex = /^(\d+)(ms|s|m|h)$/;
+  const match = durationStr.match(regex);
+
+  if (!match) {
+    throw new Error("Invalid duration");
+  }
+
+  const value = parseInt(match[1]);
+  const unit = match[2];
+
+  switch (unit) {
+    case "ms":
+      return value;
+    case "s":
+      return value * 1000;
+    case "m":
+      return value * 60 * 1000;
+    case "h":
+      return value * 60 * 60 * 1000;
+    default:
+      throw new Error("Invalid duration unit");
+  }
+}
+
+
