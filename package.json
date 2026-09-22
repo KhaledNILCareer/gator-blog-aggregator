@@ -20,5 +20,8 @@
     "drizzle-orm": "^0.45.3",
     "fast-xml-parser": "^5.11.1",
     "postgres": "^3.4.9"
+  },
+  "bin": {
+    "gator": "./src/index.ts"
   }
 }

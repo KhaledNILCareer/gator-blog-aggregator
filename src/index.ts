@@ -1,3 +1,5 @@
+#!/usr/bin/env -S npx tsx
+
 import { 
   CommandsRegistry, 
   middlewareLoggedIn,
@@ -12,7 +14,8 @@ import {
   handlerFeeds,
   handlerFollow,
   handlerFollowing,
-  handlerUnfollow
+  handlerUnfollow,
+  handlerBrowse
 } from "./commands.js";
 
 async function  main() {
@@ -34,6 +37,7 @@ async function  main() {
   registerCommand(registry, "follow", middlewareLoggedIn(handlerFollow));
   registerCommand(registry, "following", middlewareLoggedIn(handlerFollowing));
   registerCommand(registry, "unfollow", middlewareLoggedIn(handlerUnfollow));
+  registerCommand(registry, "browse", middlewareLoggedIn(handlerBrowse));
   try {
     await runCommand(registry, cmdName, ...args)
   } catch (error) {
