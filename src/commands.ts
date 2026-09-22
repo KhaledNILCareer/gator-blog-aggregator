@@ -10,12 +10,41 @@ import { fetchFeed } from "./lib/rss.js";
 import { createFeed, getFeeds, getFeedByURL } from "./lib/db/queries/feeds.js";
 import { Feed, User } from "./lib/db/schema.js";
 import { createFeedFollow, getFeedFollowsForUser } from "./lib/db/queries/feedFollows.js";
+
 export type CommandHandler = (
   cmdName: string,
   ...args: string[]
 ) => Promise<void>;
 
 export type CommandsRegistry = Record<string, CommandHandler>;
+
+export type UserCommandHandler = (
+  cmdName: string,
+  user: User,
+  ...args: string[]
+) => Promise<void>;
+
+export function middlewareLoggedIn(
+  handler: UserCommandHandler
+): CommandHandler {
+  return async (cmdName: string, ...args: string[]) => {
+
+    const config = readConfig();
+
+    if (!config.currentUserName) {
+      throw new Error("No current user selected");
+    }
+
+    const user = await getUserByName(config.currentUserName);
+
+    if (!user) {
+      throw new Error(`User ${config.currentUserName} not found`);
+    }
+
+    await handler(cmdName, user, ...args);
+
+  };
+}
 
 export function registerCommand(
   registry: CommandsRegistry,
@@ -122,6 +151,7 @@ export function printFeed(feed: Feed, user: User): void {
 
 export async function handlerAddFeed(
   cmdName: string,
+  user: User,
   ...args: string[]
 ): Promise<void> {
 
@@ -131,20 +161,11 @@ export async function handlerAddFeed(
   const name = args[0];
   const url = args[1];
 
-  const user = readConfig().currentUserName
-  if(!user){
-    throw new Error("login first")
-  }
-  const dbUser = await getUserByName(user);
-  if (!dbUser) {
-    throw new Error("User not found");
-  }
-
-  const feed = await createFeed(name, url, dbUser.id);
-  const feedFollow = await createFeedFollow(dbUser.id, feed.id);
+  const feed = await createFeed(name, url, user.id);
+  const feedFollow = await createFeedFollow(user.id, feed.id);
   console.log(`User: ${feedFollow.userName}`);
   console.log(`Feed: ${feedFollow.feedName}`);
-  printFeed(feed, dbUser);
+  printFeed(feed, user);
 }
 export async function handlerFeeds(
   cmdName: string,
@@ -162,6 +183,7 @@ export async function handlerFeeds(
 
 export async function handlerFollow(
   cmdName: string,
+  user: User,
   ...args: string[]
 ): Promise<void> {
   if (args.length < 1) {
@@ -169,15 +191,6 @@ export async function handlerFollow(
   }
 
   const url = args[0];
-
-  const config = readConfig();
-  if (!config.currentUserName) {
-    throw new Error("No current user selected");
-  }
-  const user = await getUserByName(config.currentUserName);
-  if (!user) {
-    throw new Error("User not found");
-  }
 
   const feed = await getFeedByURL(url);
   if (!feed) {
@@ -191,20 +204,10 @@ export async function handlerFollow(
 }
 export async function handlerFollowing(
   cmdName: string,
+  user: User,
   ...args: string[]
 ): Promise<void> {
-  const config = readConfig();
-
-  if (!config.currentUserName) {
-    throw new Error("No current user selected");
-  }
-
-  const user = await getUserByName(config.currentUserName);
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-
+  
   const follows = await getFeedFollowsForUser(user.id);
 
   follows.forEach((follow) => {
