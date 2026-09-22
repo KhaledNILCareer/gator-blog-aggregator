@@ -11,6 +11,8 @@ import { createFeed, getFeeds, getFeedByURL } from "./lib/db/queries/feeds.js";
 import { Feed, User } from "./lib/db/schema.js";
 import { createFeedFollow, getFeedFollowsForUser, deleteFeedFollow } from "./lib/db/queries/feedFollows.js";
 import { scrapeFeeds } from "./lib/db/queries/feeds.js";
+import { getPostsForUser } from "./lib/db/queries/posts.js";
+
 export type CommandHandler = (
   cmdName: string,
   ...args: string[]
@@ -282,3 +284,30 @@ export function parseDuration(durationStr: string): number {
 }
 
 
+export async function handlerBrowse(
+  cmdName: string,
+  user: User,
+  ...args: string[]
+): Promise<void> {
+  let limit = 2;
+
+  if (args.length > 0) {
+    const parsedLimit = Number(args[0]);
+
+    if (!Number.isInteger(parsedLimit) || parsedLimit <= 0) {
+      throw new Error("Limit must be a positive integer");
+    }
+
+    limit = parsedLimit;
+  }
+
+  const posts = await getPostsForUser(user.id, limit);
+
+  posts.forEach((post) => {
+    console.log(`Title: ${post.title}`);
+    console.log(`URL: ${post.url}`);
+    console.log(`Description: ${post.description ?? ""}`);
+    console.log(`Published At: ${post.publishedAt ?? "Unknown"}`);
+    console.log();
+  });
+}

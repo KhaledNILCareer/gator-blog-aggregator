@@ -2,6 +2,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { db } from "../index.js";
 import { users, feeds } from "../schema.js";
 import { fetchFeed } from "../../rss.js";
+import { createPost } from "./posts.js";
 
 export async function createFeed(name: string, url: string, userId: string) {
   const [result] = await db
@@ -55,6 +56,16 @@ export async function getNextFeedToFetch() {
   return feed;
 }
 
+function parsePublishedDate(dateStr: string): Date | undefined {
+  const date = new Date(dateStr);
+
+  if (isNaN(date.getTime())) {
+    return undefined;
+  }
+
+  return date;
+}
+
 export async function scrapeFeeds(): Promise<void> {
   const feed = await getNextFeedToFetch();
 
@@ -68,7 +79,15 @@ export async function scrapeFeeds(): Promise<void> {
 
   await markFeedFetched(feed.id);
 
-  rssFeed.channel.item.forEach((item) => {
-    console.log(item.title);
-  });
+  for (const item of rssFeed.channel.item) {
+    const publishedAt = parsePublishedDate(item.pubDate);
+
+    await createPost({
+      title: item.title,
+      url: item.link,
+      description: item.description,
+      publishedAt,
+      feedId: feed.id,
+    });
+  }
 }
