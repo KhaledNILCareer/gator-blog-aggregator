@@ -9,7 +9,7 @@ import { readConfig } from "./config.js";
 import { fetchFeed } from "./lib/rss.js";
 import { createFeed, getFeeds, getFeedByURL } from "./lib/db/queries/feeds.js";
 import { Feed, User } from "./lib/db/schema.js";
-import { createFeedFollow, getFeedFollowsForUser } from "./lib/db/queries/feedFollows.js";
+import { createFeedFollow, getFeedFollowsForUser, deleteFeedFollow } from "./lib/db/queries/feedFollows.js";
 
 export type CommandHandler = (
   cmdName: string,
@@ -213,4 +213,18 @@ export async function handlerFollowing(
   follows.forEach((follow) => {
     console.log(follow.feedName);
   });
+}
+
+export async function handlerUnfollow(
+  cmdName: string,
+  user: User,
+  ...args: string[]
+): Promise<void> {
+  if (args.length < 1) {
+    throw new Error("Feed URL is required");
+  }
+
+  const url = args[0];
+
+  await deleteFeedFollow(user.id ,url)
 }
